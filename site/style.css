@@ -1,0 +1,165 @@
+/* ======================================================
+   RESET E BASE
+====================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ======================================================
+   FUNDO GERAL
+====================================================== */
+body {
+  background: #f37021;
+  color: #ffffff;
+}
+
+/* ======================================================
+   TOPO
+====================================================== */
+.topo {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* ======================================================
+   SLIDES
+====================================================== */
+.slide {
+  width: 100vw;
+  height: calc(100vh - 80px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: #f37021;
+}
+
+.slide.active {
+  display: flex;
+}
+
+/* ======================================================
+   KPIs
+====================================================== */
+.kpis {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.kpis.destaque {
+  justify-content: center;
+}
+
+.kpis.dois {
+  justify-content: center;
+}
+
+/* ======================================================
+   CARD KPI (PADRÃO)
+====================================================== */
+.kpi {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 22px;
+  padding: 40px 55px;
+  min-width: 460px;
+}
+
+/* ======================================================
+   CARD PRINCIPAL (TOTAL DE PEDIDOS) 🔥
+====================================================== */
+.kpi-principal {
+  width: 860px;              /* MAIOR */
+  padding: 50px 65px;        /* MAIS RESPIRO */
+}
+
+/* ======================================================
+   TÍTULOS
+====================================================== */
+.kpi h2 {
+  font-size: 30px;
+  margin-bottom: 20px;
+}
+
+/* ======================================================
+   VALORES
+====================================================== */
+.valor {
+  font-size: 54px;           /* MAIS IMPACTO */
+  font-weight: bold;
+  line-height: 1.15;
+}
+
+.valor.menor {
+  font-size: 40px;
+  margin-top: 18px;
+}
+
+.data {
+  font-size: 18px;
+  font-weight: normal;
+  margin-left: 8px;
+}
+
+.linha-secundaria {
+  font-size: 20px;
+  margin-top: 8px;
+}
+
+/* ======================================================
+   VARIAÇÕES
+====================================================== */
+.percentual {
+  margin-top: 20px;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.positivo {
+  color: #00ff7f;
+}
+
+.negativo {
+  color: #ff4d4d;
+}
+
+/* ======================================================
+   META
+====================================================== */
+.meta {
+  margin-top: 18px;
+  font-size: 20px;
+}
+
+.meta-perc {
+  margin-top: 8px;
+  font-size: 22px;
+}
+
+/* ======================================================
+   SLIDE DE IMAGEM
+====================================================== */
+.slide-img {
+  background: #f37021;
+}
+
+.slide-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

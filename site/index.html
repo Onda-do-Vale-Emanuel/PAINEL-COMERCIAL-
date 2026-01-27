@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel Comercial</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="topo">PAINEL COMERCIAL</div>
+
+  <!-- ================= SLIDE 1 ================= -->
+  <div class="slide active">
+    <div class="kpis destaque">
+
+      <div class="kpi kpi-principal">
+        <h2>Total de Pedidos</h2>
+
+        <div class="valor">
+          <span id="fatAtual">--</span>
+          <span class="data" id="fatDataAtual"></span>
+        </div>
+
+        <div class="linha-secundaria">
+          <span id="qtdAtual">--</span> pedidos
+        </div>
+
+        <div class="valor menor">
+          <span id="fatAnoAnterior">--</span>
+          <span class="data" id="fatDataAnoAnterior"></span>
+        </div>
+
+        <div class="linha-secundaria">
+          <span id="qtdAnoAnterior">--</span> pedidos
+        </div>
+
+        <div class="percentual" id="fatVariacao">--</div>
+
+        <div class="meta" id="fatMeta">Meta mês: --</div>
+        <div class="percentual meta-perc" id="fatMetaPerc">--</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= SLIDE 2 ================= -->
+  <div class="slide">
+    <div class="kpis dois">
+
+      <div class="kpi">
+        <h2>Quantidade de Pedidos</h2>
+        <div class="valor" id="qtdAtualSlide">--</div>
+      </div>
+
+      <div class="kpi">
+        <h2>Ticket Médio</h2>
+        <div class="valor" id="ticketAtual">--</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= SLIDE 3 ================= -->
+  <div class="slide slide-img">
+    <img src="imagens/slide3.png" alt="Slide informativo">
+  </div>
+
+  <!-- ================= SCRIPTS ================= -->
+  <script src="kpis.js"></script>
+  <script src="slider.js"></script>
+
+</body>
+</html>
