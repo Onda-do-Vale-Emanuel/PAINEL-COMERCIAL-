@@ -6,65 +6,98 @@
 }
 
 body {
-  background: #000;
+  background: #f37021;
   color: #fff;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
 }
 
+/* =======================
+   SLIDES
+======================= */
 .slide {
   display: none;
   width: 100%;
   height: 100%;
-  padding: 40px 60px;
+  padding: 50px;
 }
 
 .slide.ativo {
   display: block;
 }
 
+/* =======================
+   TÍTULO
+======================= */
 h1 {
-  text-align: center;
-  font-size: 3rem;
+  font-size: 52px;
   margin-bottom: 40px;
 }
 
-.cards {
-  display: grid;
-  grid-template-columns: 2fr 1.5fr;
-  grid-template-rows: auto auto;
-  gap: 30px;
+/* =======================
+   BOXES
+======================= */
+.box {
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 18px;
+  padding: 25px 35px;
+  margin-bottom: 25px;
 }
 
-.card {
-  background: #111;
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+/* TAMANHOS */
+.box.grande {
+  font-size: 46px;
 }
 
-.card.grande {
-  grid-row: span 2;
+.box.medio {
+  font-size: 36px;
 }
 
-.titulo {
-  font-size: 1.4rem;
-  color: #aaa;
+.box.variacao {
+  font-size: 32px;
+  font-weight: bold;
 }
 
+.box.meta {
+  font-size: 26px;
+}
+
+/* TEXTOS */
 .valor {
-  font-size: 3rem;
-  margin: 15px 0;
+  font-weight: bold;
 }
 
-.valor.destaque {
-  color: #00ff88;
+.qtd {
+  font-size: 22px;
+  margin-top: 8px;
 }
 
-.qtd,
-.periodo,
-.percentual {
-  font-size: 1.3rem;
-  color: #ccc;
+.periodo {
+  font-size: 18px;
+  margin-top: 6px;
+  opacity: 0.85;
+}
+
+/* =======================
+   CORES
+======================= */
+.positivo {
+  color: #00ff7f;
+}
+
+.negativo {
+  color: #ff4c4c;
+}
+
+.meta-ok {
+  color: #00ff7f;
+}
+
+.meta-alerta {
+  color: #ffd700;
+}
+
+.meta-ruim {
+  color: #ff4c4c;
 }
