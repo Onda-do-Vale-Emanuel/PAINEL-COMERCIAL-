@@ -1,8 +1,10 @@
 let slideAtual = 0;
-const slides = document.querySelectorAll('.slide');
+const slides = document.querySelectorAll(".slide");
 
-setInterval(() => {
-  slides[slideAtual].classList.remove('ativo');
+function trocarSlide() {
+  slides[slideAtual].classList.remove("ativo");
   slideAtual = (slideAtual + 1) % slides.length;
-  slides[slideAtual].classList.add('ativo');
-}, 15000);
+  slides[slideAtual].classList.add("ativo");
+}
+
+setInterval(trocarSlide, 15000); // 15 segundos

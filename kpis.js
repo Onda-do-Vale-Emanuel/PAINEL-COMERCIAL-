@@ -1,36 +1,39 @@
-document.addEventListener("DOMContentLoaded", () => {
-  atualizarKPIs();
-});
+async function carregarJSON(caminho) {
+  const resp = await fetch(caminho);
+  return await resp.json();
+}
+
+function setTexto(id, valor) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = valor;
+}
 
 async function atualizarKPIs() {
   try {
-    const fat = await fetch("site/dados/kpi_faturamento.json").then(r => r.json());
-    const qtd = await fetch("site/dados/kpi_quantidade_pedidos.json").then(r => r.json());
+    const fat = await carregarJSON("site/dados/kpi_faturamento.json");
+    const qtd = await carregarJSON("site/dados/kpi_quantidade_pedidos.json");
 
-    // FATURAMENTO
-    document.getElementById("fatAtual").innerText =
-      fat.atual.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    setTexto("fatAtual", `R$ ${fat.atual.toLocaleString("pt-BR")}`);
+    setTexto("fatAnoAnterior", `R$ ${fat.ano_anterior.toLocaleString("pt-BR")}`);
+    setTexto("fatVariacao", `${fat.variacao}%`);
+    setTexto("periodoAtual", `até ${fat.data_fim}`);
+    setTexto("periodoAnterior", "até 28/01/2025");
 
-    document.getElementById("fatAnoAnterior").innerText =
-      fat.ano_anterior.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    setTexto("qtdAtual", `${qtd.atual} pedidos`);
+    setTexto("qtdAnoAnterior", `${qtd.ano_anterior} pedidos`);
 
-    document.getElementById("fatVariacao").innerText =
-      fat.variacao !== null ? `▲ ${fat.variacao}% vs ano anterior` : "--";
+    setTexto("qtdAtual2", qtd.atual);
+    setTexto("qtdAnoAnterior2", qtd.ano_anterior);
 
-    document.getElementById("periodoAtual").innerText =
-      `até ${fat.data_fim}`;
+    const meta = 1325000;
+    const perc = ((fat.atual / meta) * 100).toFixed(1);
+    setTexto("fatMetaPerc", `${perc}% da meta`);
 
-    document.getElementById("periodoAnterior").innerText =
-      `até ${fat.data_fim.replace("2026", "2025")}`;
+    setTexto("dataAtualizacao", new Date().toLocaleString("pt-BR"));
 
-    // QUANTIDADE
-    document.getElementById("qtdAtual").innerText =
-      `${qtd.atual} pedidos`;
-
-    document.getElementById("qtdAnoAnterior").innerText =
-      `${qtd.ano_anterior} pedidos`;
-
-  } catch (erro) {
-    console.error("Erro ao atualizar KPIs:", erro);
+  } catch (e) {
+    console.error("Erro ao atualizar KPIs", e);
   }
 }
+
+atualizarKPIs();
