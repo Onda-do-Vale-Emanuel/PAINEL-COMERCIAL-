@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Painel Comercial</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- SLIDE 1 – FATURAMENTO -->
+  <div class="slide active" id="slide1">
+    <div class="slide-header">
+      <h1>PAINEL COMERCIAL</h1>
+      <h2>Faturamento com IPI</h2>
+    </div>
+
+    <div class="slide-content">
+      <div class="kpi-row">
+        <div class="kpi-card kpi-main">
+          <div class="kpi-label">Total de pedidos</div>
+          <div class="kpi-number" id="fatQtdAtual">--</div>
+          <div class="kpi-value" id="fatValorAtual">--</div>
+          <div class="kpi-sub" id="fatDataAtual">--</div>
+        </div>
+
+        <div class="kpi-card kpi-secondary">
+          <div class="kpi-label">Ano anterior</div>
+          <div class="kpi-number" id="fatQtdAnterior">--</div>
+          <div class="kpi-value" id="fatValorAnterior">--</div>
+          <div class="kpi-sub" id="fatDataAnterior">--</div>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card kpi-variacao">
+          <div class="kpi-var" id="fatVariacao">--</div>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card kpi-meta">
+          <div id="fatMetaValor">Meta mês: --</div>
+          <div id="fatMetaPerc">🎯 -- % da meta</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⭐ NOVO SLIDE — PREÇO MÉDIO -->
+  <div class="slide" id="slide-preco">
+    <div class="slide-header">
+      <h1>PAINEL COMERCIAL</h1>
+      <h2>Preço Médio (com IPI)</h2>
+    </div>
+
+    <div class="slide-content">
+      <div class="kpi-row">
+        <div class="kpi-card kpi-main">
+          <div class="kpi-label">Preço médio por KG</div>
+          <div class="kpi-number" id="precoMedioKg">--</div>
+          <div class="kpi-sub" id="totalKgValor">--</div>
+        </div>
+
+        <div class="kpi-card kpi-secondary">
+          <div class="kpi-label">Preço médio por m²</div>
+          <div class="kpi-number" id="precoMedioM2">--</div>
+          <div class="kpi-sub" id="totalM2Valor">--</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4 — IMAGEM INSTITUCIONAL -->
+  <div class="slide" id="slide4">
+    <div class="slide-header">
+      <h1>PAINEL COMERCIAL</h1>
+      <h2>Institucional</h2>
+    </div>
+
+    <div class="slide-content slide-img-content">
+      <img
+        src="imagens/slide3.png"
+        alt="Slide institucional"
+        class="img-institucional"
+      />
+    </div>
+  </div>
+
+  <script src="slider.js"></script>
+  <script src="kpis.js"></script>
+</body>
+</html>
