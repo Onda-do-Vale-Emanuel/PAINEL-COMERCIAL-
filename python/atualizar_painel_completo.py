@@ -5,6 +5,9 @@ from datetime import datetime
 
 CAMINHO_EXCEL = "excel/PEDIDOS ONDA.xlsx"
 
+# ======================================================
+# 🔥 FUNÇÃO PARA LIMPAR NÚMEROS BRASILEIROS
+# ======================================================
 def limpar_numero(valor):
     if pd.isna(valor):
         return 0.0
@@ -19,6 +22,9 @@ def limpar_numero(valor):
         return float(v.replace(",", "."))
     return float(v)
 
+# ======================================================
+# 🔥 CARREGA PLANILHA
+# ======================================================
 def carregar_excel():
     df = pd.read_excel(CAMINHO_EXCEL)
     df.columns = df.columns.str.strip().str.upper()
@@ -37,18 +43,34 @@ def carregar_excel():
 
     return df
 
+# ======================================================
+# 🔥 PERÍODO CORRETO DO MÊS (1º dia válido → última data válida)
+# ======================================================
 def obter_periodo(df):
     ultima = df["DATA"].max()
-    primeira = df[df["DATA"].dt.month == ultima.month]["DATA"].min()
+    ano = ultima.year
+    mes = ultima.month
+
+    df_mes = df[(df["DATA"].dt.year == ano) & (df["DATA"].dt.month == mes)]
+
+    # Procurar dia 1
+    dia_1 = df_mes[df_mes["DATA"].dt.day == 1]
+    if len(dia_1) > 0:
+        primeira = dia_1["DATA"].min()
+    else:
+        primeira = df_mes["DATA"].min()
 
     return primeira, ultima
 
+# ======================================================
+# 🔥 CÁLCULOS PRINCIPAIS
+# ======================================================
 def calcular(df):
     primeira, ultima = obter_periodo(df)
 
+    # PERÍODO ATUAL
     df_periodo = df[(df["DATA"] >= primeira) & (df["DATA"] <= ultima)]
 
-    # valores
     total_valor = df_periodo["VALOR COM IPI"].sum()
     total_kg = df_periodo["KG"].sum()
     total_m2 = df_periodo["TOTAL M2"].sum()
@@ -57,17 +79,17 @@ def calcular(df):
     preco_kg = round(total_valor / total_kg, 2) if total_kg else 0
     preco_m2 = round(total_valor / total_m2, 2) if total_m2 else 0
 
-    # ano anterior
+    # PERÍODO DO ANO ANTERIOR
     ano_ant = primeira.year - 1
-    df_ant = df[
-        (df["DATA"] >= primeira.replace(year=ano_ant)) &
-        (df["DATA"] <= ultima.replace(year=ano_ant))
-    ]
+    primeira_ant = primeira.replace(year=ano_ant)
+    ultima_ant = ultima.replace(year=ano_ant)
+
+    df_ant = df[(df["DATA"] >= primeira_ant) & (df["DATA"] <= ultima_ant)]
 
     total_valor_ant = df_ant["VALOR COM IPI"].sum()
-    qtd_ant = len(df_ant)
     total_kg_ant = df_ant["KG"].sum()
     total_m2_ant = df_ant["TOTAL M2"].sum()
+    qtd_ant = len(df_ant)
 
     ticket_atual = total_valor / qtd if qtd else 0
     ticket_ant = total_valor_ant / qtd_ant if qtd_ant else 0
@@ -77,8 +99,10 @@ def calcular(df):
             "atual": total_valor,
             "ano_anterior": total_valor_ant,
             "variacao": ((total_valor / total_valor_ant) - 1) * 100 if total_valor_ant else 0,
-            "data_atual": ultima.strftime("%d/%m/%Y"),
-            "data_ano_anterior": ultima.replace(year=ano_ant).strftime("%d/%m/%Y")
+            "data_inicio": primeira.strftime("%d/%m/%Y"),
+            "data_fim": ultima.strftime("%d/%m/%Y"),
+            "data_inicio_ant": primeira_ant.strftime("%d/%m/%Y"),
+            "data_fim_ant": ultima_ant.strftime("%d/%m/%Y")
         },
         "qtd": {
             "atual": qtd,
@@ -104,12 +128,18 @@ def calcular(df):
         }
     }
 
+# ======================================================
+# 🔥 SALVAR JSON
+# ======================================================
 def salvar(nome, dados):
     with open(f"dados/{nome}", "w", encoding="utf-8") as f:
         json.dump(dados, f, ensure_ascii=False, indent=2)
     with open(f"site/dados/{nome}", "w", encoding="utf-8") as f:
         json.dump(dados, f, ensure_ascii=False, indent=2)
 
+# ======================================================
+# EXECUTAR
+# ======================================================
 if __name__ == "__main__":
     df = carregar_excel()
     res = calcular(df)
@@ -121,4 +151,4 @@ if __name__ == "__main__":
     salvar("kpi_preco_medio.json", res["preco"])
 
     print("\n✓ JSON gerados corretamente.")
-    print("📌 Período usado:", res["fat"]["data_atual"])
+    print("📌 Período usado:", res["fat"]["data_inicio"], "→", res["fat"]["data_fim"])

@@ -1,7 +1,9 @@
 {
-  "atual": 14360433.969999999,
-  "ano_anterior": 0.0,
-  "variacao": 0,
-  "data_atual": "03/02/2026",
-  "data_ano_anterior": "03/02/2024"
+  "atual": 39562.0,
+  "ano_anterior": 46266.3,
+  "variacao": -14.490676799311819,
+  "data_inicio": "02/02/2026",
+  "data_fim": "03/02/2026",
+  "data_inicio_ant": "02/02/2025",
+  "data_fim_ant": "03/02/2025"
 }
