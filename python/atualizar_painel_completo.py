@@ -5,17 +5,16 @@ from datetime import datetime
 
 CAMINHO_EXCEL = "excel/PEDIDOS ONDA.xlsx"
 
-# ======================================================
-# FUNÇÃO DE LIMPEZA COM PADRÃO BRASILEIRO
-# ======================================================
+# ---------------------------------------------------------
+# Função definitiva para limpar números (R$ 1.234,56)
+# ---------------------------------------------------------
 def limpar_numero(valor):
     if pd.isna(valor):
         return 0.0
-
     v = str(valor).strip()
     v = re.sub(r"[^0-9,.-]", "", v)
 
-    if v in ["", "-", ".", ",", ",-", ".-"]:
+    if v in ["", "-", ",", ".", ",-", ".-"]:
         return 0.0
 
     if "." in v and "," in v:
@@ -27,18 +26,17 @@ def limpar_numero(valor):
     return float(v)
 
 
-# ======================================================
-# CARREGAR EXCEL
-# ======================================================
+# ---------------------------------------------------------
+# Carregar Excel
+# ---------------------------------------------------------
 def carregar_excel():
     df = pd.read_excel(CAMINHO_EXCEL)
-
     df.columns = df.columns.str.strip().str.upper()
-
     obrig = ["DATA", "VALOR COM IPI", "KG", "TOTAL M2"]
+
     for c in obrig:
         if c not in df.columns:
-            raise Exception(f"❌ Coluna obrigatória ausente: {c}")
+            raise Exception(f"❌ Coluna ausente: {c}")
 
     df["DATA"] = pd.to_datetime(df["DATA"], errors="coerce")
     df = df[df["DATA"].notna()]
@@ -50,97 +48,93 @@ def carregar_excel():
     return df
 
 
-# ======================================================
-# OBTÉM PERÍODO REAL DO MÊS + DATA PARA EXIBIÇÃO
-# ======================================================
+# ---------------------------------------------------------
+# Definir período correto
+# 01/MM/AAAA até última data do mês
+# ---------------------------------------------------------
 def obter_periodo(df):
-    ultima_data = df["DATA"].max()
-    ano = ultima_data.year
-    mes = ultima_data.month
+    ultima = df["DATA"].max()
+    primeira = ultima.replace(day=1)
 
-    # PRIMEIRA DATA REAL EXISTENTE NO MÊS
-    primeira_real = df[df["DATA"].dt.month == mes]["DATA"].min()
-
-    # DATA PARA EXIBIÇÃO SEMPRE COMEÇA EM 01
-    primeira_exibicao = datetime(ano, mes, 1)
-
-    return primeira_real, ultima_data, primeira_exibicao
+    return primeira, ultima
 
 
-# ======================================================
-# CALCULA KPIs
-# ======================================================
-def calcular_kpis(df):
-    primeira_real, ultima, primeira_exibicao = obter_periodo(df)
+# ---------------------------------------------------------
+# Calcular tudo do painel
+# ---------------------------------------------------------
+def calcular(df):
+    primeira, ultima = obter_periodo(df)
+    ano_atual = ultima.year
+    ano_anterior = ano_atual - 1
 
-    # Período real para cálculo
-    df_periodo = df[(df["DATA"] >= primeira_real) & (df["DATA"] <= ultima)]
+    # Período atual
+    df_atual = df[(df["DATA"] >= primeira) & (df["DATA"] <= ultima)]
 
-    total_valor = df_periodo["VALOR COM IPI"].sum()
-    total_kg = df_periodo["KG"].sum()
-    total_m2 = df_periodo["TOTAL M2"].sum()
-    qtd = len(df_periodo)
-
-    # Ano anterior
-    ano_ant = ultima.year - 1
-    primeira_ant = primeira_real.replace(year=ano_ant)
-    ultima_ant = ultima.replace(year=ano_ant)
+    # Período ano anterior
+    primeira_ant = primeira.replace(year=ano_anterior)
+    ultima_ant = ultima.replace(year=ano_anterior)
 
     df_ant = df[(df["DATA"] >= primeira_ant) & (df["DATA"] <= ultima_ant)]
 
-    fat_ant = df_ant["VALOR COM IPI"].sum()
-    kg_ant = df_ant["KG"].sum()
+    # ---- SOMAS ----
+    total_valor = df_atual["VALOR COM IPI"].sum()
+    total_kg = df_atual["KG"].sum()
+    total_m2 = df_atual["TOTAL M2"].sum()
+    qtd = len(df_atual)
+
+    total_valor_ant = df_ant["VALOR COM IPI"].sum()
+    total_kg_ant = df_ant["KG"].sum()
+    total_m2_ant = df_ant["TOTAL M2"].sum()
     qtd_ant = len(df_ant)
 
+    # ---- TICKET ----
     ticket_atual = total_valor / qtd if qtd else 0
-    ticket_ant = fat_ant / qtd_ant if qtd_ant else 0
+    ticket_ant = total_valor_ant / qtd_ant if qtd_ant else 0
 
-    # Preço médio (período real)
+    # ---- PREÇO MÉDIO ----
     preco_kg = round(total_valor / total_kg, 2) if total_kg else 0
     preco_m2 = round(total_valor / total_m2, 2) if total_m2 else 0
 
     return {
-        "periodo": {
-            "primeira_real": primeira_real,
-            "ultima": ultima,
-            "primeira_exibicao": primeira_exibicao
-        },
         "fat": {
-            "atual": round(total_valor, 2),
-            "ano_anterior": round(fat_ant, 2),
-            "variacao": ((total_valor / fat_ant - 1) * 100) if fat_ant else 0,
+            "atual": total_valor,
+            "ano_anterior": total_valor_ant,
+            "variacao": ((total_valor / total_valor_ant) - 1) * 100 if total_valor_ant else 0,
             "data_atual": ultima.strftime("%d/%m/%Y"),
             "data_ano_anterior": ultima_ant.strftime("%d/%m/%Y"),
-            "inicio_exibicao": primeira_exibicao.strftime("%d/%m/%Y")
         },
         "qtd": {
             "atual": qtd,
             "ano_anterior": qtd_ant,
-            "variacao": ((qtd / qtd_ant - 1) * 100) if qtd_ant else 0
+            "variacao": ((qtd / qtd_ant) - 1) * 100 if qtd_ant else 0,
         },
         "kg": {
-            "atual": round(total_kg, 2),
-            "ano_anterior": round(kg_ant, 2),
-            "variacao": ((total_kg / kg_ant - 1) * 100) if kg_ant else 0
+            "atual": total_kg,
+            "ano_anterior": total_kg_ant,
+            "variacao": ((total_kg / total_kg_ant) - 1) * 100 if total_kg_ant else 0,
         },
         "ticket": {
-            "atual": round(ticket_atual, 2),
-            "ano_anterior": round(ticket_ant, 2),
-            "variacao": ((ticket_atual / ticket_ant - 1) * 100) if ticket_ant else 0
+            "atual": ticket_atual,
+            "ano_anterior": ticket_ant,
+            "variacao": ((ticket_atual / ticket_ant) - 1) * 100 if ticket_ant else 0,
         },
         "preco": {
             "preco_medio_kg": preco_kg,
             "preco_medio_m2": preco_m2,
-            "total_kg": round(total_kg, 2),
-            "total_m2": round(total_m2, 2),
-            "data": ultima.strftime("%d/%m/%Y")
-        }
+            "total_kg": total_kg,
+            "total_m2": total_m2,
+            "data": ultima.strftime("%d/%m/%Y"),
+        },
+        "primeira": primeira.strftime("%d/%m/%Y"),
+        "ultima": ultima.strftime("%d/%m/%Y"),
+        "primeira_ant": primeira_ant.strftime("%d/%m/%Y"),
+        "ultima_ant": ultima_ant.strftime("%d/%m/%Y"),
     }
 
 
-# ======================================================
-# SALVAR ARQUIVOS JSON
-# ======================================================
+# ---------------------------------------------------------
+# Salvar JSONs
+# ---------------------------------------------------------
 def salvar(nome, dados):
     with open(f"dados/{nome}", "w", encoding="utf-8") as f:
         json.dump(dados, f, ensure_ascii=False, indent=2)
@@ -149,19 +143,20 @@ def salvar(nome, dados):
         json.dump(dados, f, ensure_ascii=False, indent=2)
 
 
-# ======================================================
-# EXECUÇÃO PRINCIPAL
-# ======================================================
+# ---------------------------------------------------------
+# Executar
+# ---------------------------------------------------------
 if __name__ == "__main__":
     df = carregar_excel()
-    r = calcular_kpis(df)
+    res = calcular(df)
 
-    salvar("kpi_faturamento.json", r["fat"])
-    salvar("kpi_quantidade_pedidos.json", r["qtd"])
-    salvar("kpi_kg_total.json", r["kg"])
-    salvar("kpi_ticket_medio.json", r["ticket"])
-    salvar("kpi_preco_medio.json", r["preco"])
+    salvar("kpi_faturamento.json", res["fat"])
+    salvar("kpi_quantidade_pedidos.json", res["qtd"])
+    salvar("kpi_kg_total.json", res["kg"])
+    salvar("kpi_ticket_medio.json", res["ticket"])
+    salvar("kpi_preco_medio.json", res["preco"])
 
-    print("\n✓ JSON gerados corretamente!")
-    print("📅 Exibição no site: 01/" + r["fat"]["data_atual"][3:])
-    print("📌 Período real usado:", r["periodo"]["primeira_real"], "→", r["periodo"]["ultima"])
+    print("✓ JSON gerados!")
+    print("📌 Exibindo no site:")
+    print("Ano atual:", res["primeira"], "→", res["ultima"])
+    print("Ano anterior:", res["primeira_ant"], "→", res["ultima_ant"])
