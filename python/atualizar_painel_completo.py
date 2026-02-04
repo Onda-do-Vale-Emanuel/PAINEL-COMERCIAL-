@@ -22,6 +22,16 @@ def limpar_numero(valor):
     return float(v)
 
 # ======================================================
+# LIMPA PEDIDO (🔥 CHAVE DA CORREÇÃO 🔥)
+# ======================================================
+def limpar_pedido(valor):
+    if pd.isna(valor):
+        return None
+    v = str(valor).strip()
+    v = re.sub(r"[^0-9]", "", v)  # remove . , espaços, texto
+    return v if v != "" else None
+
+# ======================================================
 # CARREGA EXCEL
 # ======================================================
 def carregar_excel():
@@ -35,6 +45,10 @@ def carregar_excel():
 
     df["DATA"] = pd.to_datetime(df["DATA"], errors="coerce")
     df = df[df["DATA"].notna()]
+
+    # 🔥 NORMALIZA PEDIDOS
+    df["PEDIDO_LIMPO"] = df["PEDIDO"].apply(limpar_pedido)
+    df = df[df["PEDIDO_LIMPO"].notna()]
 
     df["VALOR COM IPI"] = df["VALOR COM IPI"].apply(limpar_numero)
     df["KG"] = df["KG"].apply(limpar_numero)
@@ -56,15 +70,15 @@ def obter_periodo_mes(df):
     return primeira, ultima
 
 # ======================================================
-# CÁLCULOS PRINCIPAIS
+# CÁLCULOS
 # ======================================================
 def calcular(df):
     primeira, ultima = obter_periodo_mes(df)
 
     df_atual = df[(df["DATA"] >= primeira) & (df["DATA"] <= ultima)]
 
-    # 🔥 CORREÇÃO CRÍTICA: pedidos únicos
-    qtd_atual = df_atual["PEDIDO"].nunique()
+    # ✅ AGORA SIM — pedidos reais
+    qtd_atual = df_atual["PEDIDO_LIMPO"].nunique()
 
     total_valor = df_atual["VALOR COM IPI"].sum()
     total_kg = df_atual["KG"].sum()
@@ -78,9 +92,12 @@ def calcular(df):
     primeira_ant = primeira.replace(year=ano_ant)
     ultima_ant = ultima.replace(year=ano_ant)
 
-    df_ant = df[(df["DATA"] >= primeira_ant) & (df["DATA"] <= ultima_ant)]
+    df_ant = df[
+        (df["DATA"] >= primeira_ant) &
+        (df["DATA"] <= ultima_ant)
+    ]
 
-    qtd_ant = df_ant["PEDIDO"].nunique()
+    qtd_ant = df_ant["PEDIDO_LIMPO"].nunique()
     total_valor_ant = df_ant["VALOR COM IPI"].sum()
     total_kg_ant = df_ant["KG"].sum()
 
