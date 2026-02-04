@@ -31,7 +31,15 @@ def carregar_excel():
     df = pd.read_excel(CAMINHO_EXCEL)
     df.columns = df.columns.str.strip().str.upper()
 
-    obrigatorias = ["DATA", "PEDIDO", "VALOR COM IPI", "KG", "TOTAL M2"]
+    obrigatorias = [
+        "DATA",
+        "PEDIDO",
+        "TIPO DE PEDIDO",
+        "VALOR COM IPI",
+        "KG",
+        "TOTAL M2"
+    ]
+
     for c in obrigatorias:
         if c not in df.columns:
             raise Exception(f"❌ Coluna obrigatória ausente: {c}")
@@ -43,10 +51,14 @@ def carregar_excel():
     df["KG"] = df["KG"].apply(limpar_numero)
     df["TOTAL M2"] = df["TOTAL M2"].apply(limpar_numero)
 
+    # 🔥 REGRA DEFINITIVA — IGUAL AO EXCEL
+    df["TIPO DE PEDIDO"] = df["TIPO DE PEDIDO"].astype(str).str.upper().str.strip()
+    df = df[df["TIPO DE PEDIDO"] == "NORMAL"]
+
     return df.reset_index(drop=True)
 
 # ======================================================
-# PERÍODO CORRETO
+# PERÍODO
 # ======================================================
 def obter_periodo(df):
     ultima = df["DATA"].max()
@@ -54,35 +66,32 @@ def obter_periodo(df):
     return inicio_mes, ultima
 
 # ======================================================
-# CÁLCULO PRINCIPAL
+# KPIs
 # ======================================================
 def calcular_kpis(df):
     inicio, fim = obter_periodo(df)
 
-    # ===== ATUAL =====
-    df_atual = df[(df["DATA"] >= inicio) & (df["DATA"] <= fim)].copy()
+    df_atual = df[(df["DATA"] >= inicio) & (df["DATA"] <= fim)]
 
     qtd_atual = df_atual["PEDIDO"].nunique()
     fat_atual = df_atual["VALOR COM IPI"].sum()
     kg_atual = df_atual["KG"].sum()
     m2_atual = df_atual["TOTAL M2"].sum()
 
-    # ===== ANO ANTERIOR =====
+    # Ano anterior
     inicio_ant = inicio.replace(year=inicio.year - 1)
     fim_ant = fim.replace(year=fim.year - 1)
 
-    df_ant = df[(df["DATA"] >= inicio_ant) & (df["DATA"] <= fim_ant)].copy()
+    df_ant = df[(df["DATA"] >= inicio_ant) & (df["DATA"] <= fim_ant)]
 
     qtd_ant = df_ant["PEDIDO"].nunique()
     fat_ant = df_ant["VALOR COM IPI"].sum()
     kg_ant = df_ant["KG"].sum()
     m2_ant = df_ant["TOTAL M2"].sum()
 
-    # ===== TICKET =====
     ticket_atual = fat_atual / qtd_atual if qtd_atual else 0
     ticket_ant = fat_ant / qtd_ant if qtd_ant else 0
 
-    # ===== PREÇO MÉDIO =====
     preco_kg = fat_atual / kg_atual if kg_atual else 0
     preco_m2 = fat_atual / m2_atual if m2_atual else 0
 
