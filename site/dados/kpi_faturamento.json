@@ -3,5 +3,7 @@
   "ano_anterior": 111991.4,
   "variacao": -15.8955330498592,
   "data_atual": "04/02/2026",
-  "data_ano_anterior": "04/02/2025"
+  "inicio_mes": "02/02/2026",
+  "data_ano_anterior": "04/02/2025",
+  "inicio_mes_anterior": "02/02/2025"
 }
