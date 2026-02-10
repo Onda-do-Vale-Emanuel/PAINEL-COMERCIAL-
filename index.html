@@ -115,29 +115,48 @@
     </div>
   </div>
 
-  <!-- SLIDE 4 -->
-  <div class="slide">
-    <div class="slide-header">
-      <h1>PAINEL COMERCIAL</h1>
-      <h2>Preço Médio</h2>
-    </div>
+ <!-- SLIDE 4 -->
+<div class="slide">
+  <div class="slide-header">
+    <h1>PAINEL COMERCIAL</h1>
+    <h2>Preço Médio</h2>
+  </div>
 
-    <div class="slide-content">
-      <div class="kpi-row">
-        <div class="kpi-card kpi-main">
-          <div class="kpi-label">Preço Médio por KG</div>
-          <div class="kpi-value" id="precoMedioKG">--</div>
-          <div class="kpi-sub" id="precoDataKG">--</div>
-        </div>
+  <div class="slide-content">
 
-        <div class="kpi-card kpi-secondary">
-          <div class="kpi-label">Preço Médio por m²</div>
-          <div class="kpi-value" id="precoMedioM2">--</div>
-          <div class="kpi-sub" id="precoDataM2">--</div>
-        </div>
+    <!-- LINHA 1: PREÇO MÉDIO ATUAL -->
+    <div class="kpi-row-preco">
+      <div class="kpi-card-preco">
+        <div class="kpi-label">Preço Médio por KG (Atual)</div>
+        <div class="kpi-value" id="precoMedioKG">--</div>
+        <div class="kpi-sub" id="precoDataKG">--</div>
+      </div>
+
+      <div class="kpi-card-preco">
+        <div class="kpi-label">Preço Médio por m² (Atual)</div>
+        <div class="kpi-value" id="precoMedioM2">--</div>
+        <div class="kpi-sub" id="precoDataM2">--</div>
       </div>
     </div>
+
+    <!-- LINHA 2: PREÇO MÉDIO ANO ANTERIOR -->
+    <div class="kpi-row-preco">
+      <div class="kpi-card-preco">
+        <div class="kpi-label">Preço Médio por KG (Ano Anterior)</div>
+        <div class="kpi-value" id="precoMedioKGant">--</div>
+        <div class="kpi-sub" id="precoDataKGant">--</div>
+      </div>
+
+      <div class="kpi-card-preco">
+        <div class="kpi-label">Preço Médio por m² (Ano Anterior)</div>
+        <div class="kpi-value" id="precoMedioM2ant">--</div>
+        <div class="kpi-sub" id="precoDataM2ant">--</div>
+      </div>
+    </div>
+
   </div>
+</div>
+
 
   <script src="slider.js"></script>
   <script src="kpis.js"></script>
