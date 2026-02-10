@@ -1,408 +1,298 @@
-﻿===============================
- ESTRUTURA DE PASTAS
-===============================
-
-Listagem de caminhos de pasta para o volume Dados
-O n·mero de sÚrie do volume Ú 2494-78B5
-D:.
-|   ATUALIZAR_PAINEL.bat
-|   ATUALIZAR_PAINEL.ps1
-|   ESTRUTURA_PROJETO.txt
-|   index.html
-|   kpis.js
-|   slider.js
-|   style.css
-|   
-+---dados
-|       kpi_faturamento.json
-|       kpi_quantidade_pedidos.json
-|       kpi_ticket_medio.json
-|       
-+---excel
-|       PEDIDOS ONDA.xlsx
-|       
-+---imagens
-|       slide3.png
-|       
-+---python
-|       atualizar_dashboard.py
-|       atualizar_kpis.py
-|       atualizar_kpi_quantidade_pedidos.py
-|       atualizar_kpi_ticket_medio.py
-|       atualizar_painel_completo.py
-|       ver_colunas.py
-|       
-\---site
-    \---dados
-            kpi_faturamento.json
-            kpi_quantidade_pedidos.json
-            kpi_ticket_medio.json
-            
-
-===============================
- CONTEUDO DOS ARQUIVOS
-===============================
-
------ ATUALIZAR_PAINEL.bat -----
-@echo off
-cd /d D:\USUARIOS\ADM05\Documents\dashboard_tv
-
-echo =====================================
-echo Iniciando atualizacao dos KPIs...
-echo =====================================
-
-python python\atualizar_dashboard.py
-python python\atualizar_kpi_quantidade_pedidos.py
-python python\atualizar_kpi_ticket_medio.py
-
-echo.
-echo Publicando no GitHub...
-
-git add site\dados\*.json
-git commit -m "Atualizacao KPIs automatica"
-git push
-
-echo.
-echo =====================================
-echo Painel atualizado com sucesso!
-echo =====================================
-
-pause
-
------ D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_dashboard.py -----
-from pathlib import Path
-import json
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-PASTA_DADOS = BASE_DIR / "dados"
-
-PASTA_DADOS.mkdir(exist_ok=True)
-
-# EXEMPLO DE DADO (ajuste conforme sua lÃ³gica real)
-kpi_faturamento = {
-    "titulo": "Faturamento",
-    "valor": 125000,
-    "formato": "R$"
-}
-
-with open(PASTA_DADOS / "kpi_faturamento.json", "w", encoding="utf-8") as f:
-    json.dump(kpi_faturamento, f, ensure_ascii=False, indent=2)
-
-print("âœ… KPI faturamento atualizado")
-
------ D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_kpis.py -----
-import pandas as pd
-import json
-from datetime import datetime
-from pathlib import Path
-
-print("ðŸ”„ Iniciando atualizaÃ§Ã£o dos KPIs (IGUAL AO EXCEL DEFINITIVO)...")
-
-# ======================================================
-# CAMINHOS
-# ======================================================
-BASE_DIR = Path(__file__).resolve().parents[1]
-ARQ_EXCEL = BASE_DIR / "excel" / "PEDIDOS ONDA.xlsx"
-PASTA_DADOS = BASE_DIR / "site" / "dados"
-PASTA_DADOS.mkdir(exist_ok=True)
-
-# ======================================================
-# COLUNAS (base 0)
-# ======================================================
-COL_TIPO = 3
-COL_DATA = 4
-COL_VALOR = 7   # ðŸ”¥ COLUNA H (use 8 se quiser coluna I)
-
-# ======================================================
-# DATA DE REFERÃŠNCIA
-# ======================================================
-HOJE = datetime(2026, 1, 26)
-ANO_ATUAL = HOJE.year
-ANO_ANTERIOR = HOJE.year - 1
-
-# ======================================================
-# LEITURA
-# ======================================================
-df = pd.read_excel(ARQ_EXCEL)
-print(f"ðŸ“„ Linhas lidas: {len(df)}")
-
-# ======================================================
-# FILTRO NORMAL
-# ======================================================
-df = df[df.iloc[:, COL_TIPO].astype(str).str.upper().str.strip() == "NORMAL"]
-print(f"âœ… NORMAL: {len(df)} linhas")
-
-# ======================================================
-# DATA
-# ======================================================
-df["DATA_OK"] = pd.to_datetime(
-    df.iloc[:, COL_DATA],
-    errors="coerce",
-    dayfirst=True
-)
-df = df.dropna(subset=["DATA_OK"])
-
-# ======================================================
-# VALOR (ðŸ”¥ SEM CONVERSÃƒO PARA STRING)
-# ======================================================
-df["VALOR_OK"] = pd.to_numeric(
-    df.iloc[:, COL_VALOR],
-    errors="coerce"
-).fillna(0)
-
-# ======================================================
-# FILTRO DE PERÃODO
-# ======================================================
-df_atual = df[
-    (df["DATA_OK"].dt.year == ANO_ATUAL) &
-    (df["DATA_OK"] <= HOJE)
-]
-
-df_ano_anterior = df[
-    (df["DATA_OK"].dt.year == ANO_ANTERIOR) &
-    (df["DATA_OK"] <= HOJE.replace(year=ANO_ANTERIOR))
-]
-
-print(f"ðŸ“† Pedidos ano atual: {len(df_atual)}")
-print(f"ðŸ“† Pedidos ano anterior: {len(df_ano_anterior)}")
-
-# ======================================================
-# SOMA IGUAL AO EXCEL
-# ======================================================
-fat_atual = float(df_atual["VALOR_OK"].sum())
-fat_ano_anterior = float(df_ano_anterior["VALOR_OK"].sum())
-
-# ======================================================
-# QUANTIDADE
-# ======================================================
-qtd_atual = int(len(df_atual))
-qtd_ano_anterior = int(len(df_ano_anterior))
-
-# ======================================================
-# VARIAÃ‡ÃƒO
-# ======================================================
-var_fat = ((fat_atual - fat_ano_anterior) / fat_ano_anterior * 100) if fat_ano_anterior > 0 else None
-
-# ======================================================
-# SALVAR JSON
-# ======================================================
-with open(PASTA_DADOS / "kpi_faturamento.json", "w", encoding="utf-8") as f:
-    json.dump({
-        "atual": round(fat_atual, 2),
-        "ano_anterior": round(fat_ano_anterior, 2),
-        "data_atual": HOJE.strftime("%d/%m/%Y"),
-        "data_ano_anterior": HOJE.replace(year=ANO_ANTERIOR).strftime("%d/%m/%Y"),
-        "variacao": round(var_fat, 1) if var_fat is not None else None
-    }, f, ensure_ascii=False, indent=2)
-
-print("âœ… KPIs gerados com sucesso (IGUAL AO EXCEL)")
-print(f"ðŸ’° Atual: {fat_atual:,.2f}")
-print(f"ðŸ’° Ano anterior: {fat_ano_anterior:,.2f}")
-print(f"ðŸ“¦ Pedidos: {qtd_atual}")
-
------ D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_kpi_quantidade_pedidos.py -----
-from pathlib import Path
-import json
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-PASTA_DADOS = BASE_DIR / "dados"
-
-PASTA_DADOS.mkdir(exist_ok=True)
-
-kpi_quantidade = {
-    "titulo": "Pedidos",
-    "valor": 342
-}
-
-with open(PASTA_DADOS / "kpi_quantidade_pedidos.json", "w", encoding="utf-8") as f:
-    json.dump(kpi_quantidade, f, ensure_ascii=False, indent=2)
-
-print("âœ… KPI quantidade de pedidos atualizado")
-
------ D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_kpi_ticket_medio.py -----
-from pathlib import Path
-import json
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-PASTA_DADOS = BASE_DIR / "dados"
-
-PASTA_DADOS.mkdir(exist_ok=True)
-
-kpi_ticket = {
-    "titulo": "Ticket MÃ©dio",
-    "valor": 365.20,
-    "formato": "R$"
-}
-
-with open(PASTA_DADOS / "kpi_ticket_medio.json", "w", encoding="utf-8") as f:
-    json.dump(kpi_ticket, f, ensure_ascii=False, indent=2)
-
-print("âœ… KPI ticket mÃ©dio atualizado")
-
------ D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_painel_completo.py -----
-import pandas as pd
-import json
-from datetime import datetime
-from pathlib import Path
-import numpy as np
-
-print("Iniciando atualizaÃ§Ã£o do painel...")
-
-# ======================================================
-# CAMINHOS
-# ======================================================
-BASE_DIR = Path(__file__).resolve().parents[1]
-ARQ_EXCEL = BASE_DIR / "excel" / "PEDIDOS ONDA.xlsx"
-PASTA_DADOS = BASE_DIR / "site" / "dados"
-PASTA_DADOS.mkdir(parents=True, exist_ok=True)
-
-# ======================================================
-# CONFIGURAÃ‡Ã•ES DE COLUNAS (base 0)
-# ======================================================
-COL_TIPO = 3
-COL_DATA = 4
-COL_VALOR = 7   # CONFIRME SE ESTA Ã‰ A COLUNA DO VALOR FINAL
-
-# ======================================================
-# DATA ÃšNICA
-# ======================================================
-HOJE = datetime.now()
-ANO_ATUAL = HOJE.year
-ANO_ANTERIOR = HOJE.year - 1
-
-# ======================================================
-# LEITURA
-# ======================================================
-df = pd.read_excel(ARQ_EXCEL)
-print(f"Linhas lidas: {len(df)}")
-
-# ======================================================
-# FILTRO NORMAL
-# ======================================================
-df = df[
-    df.iloc[:, COL_TIPO]
-    .astype(str)
-    .str.upper()
-    .str.strip()
-    == "NORMAL"
-]
-
-print(f"Pedidos NORMAL: {len(df)}")
-
-# ======================================================
-# DATA
-# ======================================================
-df["DATA_OK"] = pd.to_datetime(
-    df.iloc[:, COL_DATA],
-    errors="coerce",
-    dayfirst=True
-)
-df = df.dropna(subset=["DATA_OK"])
-
-# ======================================================
-# VALOR
-# ======================================================
-def converter_valor(v):
-    if pd.isna(v):
-        return 0.0
-    if isinstance(v, (int, float, np.integer, np.floating)):
-        return float(v)
-    v = str(v).replace(".", "").replace(",", ".")
-    try:
-        return float(v)
-    except:
-        return 0.0
-
-df["VALOR_OK"] = df.iloc[:, COL_VALOR].apply(converter_valor)
-
-# ======================================================
-# FILTRO PERÃODO
-# ======================================================
-df_atual = df[
-    (df["DATA_OK"].dt.year == ANO_ATUAL) &
-    (df["DATA_OK"].dt.date <= HOJE.date())
-]
-
-df_ano_anterior = df[
-    (df["DATA_OK"].dt.year == ANO_ANTERIOR) &
-    (df["DATA_OK"].dt.date <= HOJE.replace(year=ANO_ANTERIOR).date())
-]
-
-print(f"Pedidos ano atual: {len(df_atual)}")
-print(f"Pedidos ano anterior: {len(df_ano_anterior)}")
-
-# ======================================================
-# KPIs
-# ======================================================
-faturamento_atual = round(float(df_atual["VALOR_OK"].sum()), 2)
-faturamento_anterior = round(float(df_ano_anterior["VALOR_OK"].sum()), 2)
-
-qtd_atual = int(len(df_atual))
-qtd_anterior = int(len(df_ano_anterior))
-
-ticket_medio = round(
-    faturamento_atual / qtd_atual, 2
-) if qtd_atual > 0 else 0.0
-
-variacao_faturamento = round(
-    ((faturamento_atual - faturamento_anterior) / faturamento_anterior) * 100, 1
-) if faturamento_anterior > 0 else None
-
-variacao_qtd = round(
-    ((qtd_atual - qtd_anterior) / qtd_anterior) * 100, 1
-) if qtd_anterior > 0 else None
-
-# ======================================================
-# JSONs
-# ======================================================
-json.dump(
-    {
-        "atual": faturamento_atual,
-        "ano_anterior": faturamento_anterior,
-        "variacao": variacao_faturamento,
-        "data": HOJE.strftime("%d/%m/%Y")
-    },
-    open(PASTA_DADOS / "kpi_faturamento.json", "w", encoding="utf-8"),
-    ensure_ascii=False,
-    indent=2
-)
-
-json.dump(
-    {
-        "atual": qtd_atual,
-        "ano_anterior": qtd_anterior,
-        "variacao": variacao_qtd,
-        "data": HOJE.strftime("%d/%m/%Y")
-    },
-    open(PASTA_DADOS / "kpi_quantidade_pedidos.json", "w", encoding="utf-8"),
-    ensure_ascii=False,
-    indent=2
-)
-
-json.dump(
-    {
-        "valor": ticket_medio,
-        "data": HOJE.strftime("%d/%m/%Y")
-    },
-    open(PASTA_DADOS / "kpi_ticket_medio.json", "w", encoding="utf-8"),
-    ensure_ascii=False,
-    indent=2
-)
-
-# ======================================================
-# LOG FINAL
-# ======================================================
-print("AtualizaÃ§Ã£o concluÃ­da com sucesso")
-print(f"Faturamento: {faturamento_atual:,.2f}")
-print(f"Pedidos: {qtd_atual}")
-print(f"Ticket mÃ©dio: {ticket_medio:,.2f}")
-
------ D:\USUARIOS\ADM05\Documents\dashboard_tv\python\ver_colunas.py -----
-import pandas as pd
-
-df = pd.read_excel("excel/PEDIDOS ONDA.xlsx")
-print(df.columns.tolist())
-
-===============================
- ARQUIVO GERADO COM SUCESSO
-===============================
+﻿==================== ESTRUTURA COMPLETA DO PROJETO ====================
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\dados
+NOME            : dados
+TIPO            : PASTA
+TAMANHO         : -
+MODIFICADO EM   : 01/30/2026 09:44:32
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\excel
+NOME            : excel
+TIPO            : PASTA
+TAMANHO         : -
+MODIFICADO EM   : 02/06/2026 11:20:43
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\imagens
+NOME            : imagens
+TIPO            : PASTA
+TAMANHO         : -
+MODIFICADO EM   : 01/30/2026 09:01:08
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\python
+NOME            : python
+TIPO            : PASTA
+TAMANHO         : -
+MODIFICADO EM   : 02/05/2026 13:05:27
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\site
+NOME            : site
+TIPO            : PASTA
+TAMANHO         : -
+MODIFICADO EM   : 01/30/2026 08:58:21
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\ATUALIZAR_PAINEL.bat
+NOME            : ATUALIZAR_PAINEL.bat
+TIPO            : ARQUIVO
+TAMANHO         : 483 bytes
+MODIFICADO EM   : 01/30/2026 09:44:01
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\ATUALIZAR_PAINEL.ps1
+NOME            : ATUALIZAR_PAINEL.ps1
+TIPO            : ARQUIVO
+TAMANHO         : 432 bytes
+MODIFICADO EM   : 01/27/2026 16:48:52
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\estrutura.txt
+NOME            : estrutura.txt
+TIPO            : ARQUIVO
+TAMANHO         : 1518 bytes
+MODIFICADO EM   : 01/29/2026 14:25:22
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\ESTRUTURA_PROJETO.txt
+NOME            : ESTRUTURA_PROJETO.txt
+TIPO            : ARQUIVO
+TAMANHO         : 1301 bytes
+MODIFICADO EM   : 02/09/2026 12:09:41
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\index.html
+NOME            : index.html
+TIPO            : ARQUIVO
+TAMANHO         : 4378 bytes
+MODIFICADO EM   : 02/04/2026 15:29:31
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\kpis.js
+NOME            : kpis.js
+TIPO            : ARQUIVO
+TAMANHO         : 7139 bytes
+MODIFICADO EM   : 02/05/2026 16:15:09
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\slider.js
+NOME            : slider.js
+TIPO            : ARQUIVO
+TAMANHO         : 448 bytes
+MODIFICADO EM   : 01/30/2026 10:50:08
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\style.css
+NOME            : style.css
+TIPO            : ARQUIVO
+TAMANHO         : 2983 bytes
+MODIFICADO EM   : 01/30/2026 10:10:12
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\dados\kpi_faturamento.json
+NOME            : kpi_faturamento.json
+TIPO            : ARQUIVO
+TAMANHO         : 230 bytes
+MODIFICADO EM   : 02/05/2026 16:15:50
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\dados\kpi_kg_total.json
+NOME            : kpi_kg_total.json
+TIPO            : ARQUIVO
+TAMANHO         : 86 bytes
+MODIFICADO EM   : 02/05/2026 16:15:50
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\dados\kpi_preco_medio.json
+NOME            : kpi_preco_medio.json
+TIPO            : ARQUIVO
+TAMANHO         : 132 bytes
+MODIFICADO EM   : 02/06/2026 13:11:45
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\dados\kpi_quantidade_pedidos.json
+NOME            : kpi_quantidade_pedidos.json
+TIPO            : ARQUIVO
+TAMANHO         : 76 bytes
+MODIFICADO EM   : 02/05/2026 16:15:50
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\dados\kpi_ticket_medio.json
+NOME            : kpi_ticket_medio.json
+TIPO            : ARQUIVO
+TAMANHO         : 88 bytes
+MODIFICADO EM   : 02/05/2026 16:15:50
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\excel\PEDIDOS ONDA.xlsx
+NOME            : PEDIDOS ONDA.xlsx
+TIPO            : ARQUIVO
+TAMANHO         : 324083 bytes
+MODIFICADO EM   : 02/05/2026 16:58:38
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\excel\PEDIDOS_2025.xlsx
+NOME            : PEDIDOS_2025.xlsx
+TIPO            : ARQUIVO
+TAMANHO         : 301705 bytes
+MODIFICADO EM   : 02/06/2026 11:20:40
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\excel\PEDIDOS_2026.xlsx
+NOME            : PEDIDOS_2026.xlsx
+TIPO            : ARQUIVO
+TAMANHO         : 324083 bytes
+MODIFICADO EM   : 02/05/2026 16:58:38
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\imagens\slide3.png
+NOME            : slide3.png
+TIPO            : ARQUIVO
+TAMANHO         : 410263 bytes
+MODIFICADO EM   : 01/27/2026 15:46:52
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_dashboard.py
+NOME            : atualizar_dashboard.py
+TIPO            : ARQUIVO
+TAMANHO         : 503 bytes
+MODIFICADO EM   : 01/28/2026 14:39:08
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_kpis.py
+NOME            : atualizar_kpis.py
+TIPO            : ARQUIVO
+TAMANHO         : 3834 bytes
+MODIFICADO EM   : 01/27/2026 15:24:32
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_kpi_quantidade_pedidos.py
+NOME            : atualizar_kpi_quantidade_pedidos.py
+TIPO            : ARQUIVO
+TAMANHO         : 435 bytes
+MODIFICADO EM   : 01/28/2026 14:39:24
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_kpi_ticket_medio.py
+NOME            : atualizar_kpi_ticket_medio.py
+TIPO            : ARQUIVO
+TAMANHO         : 444 bytes
+MODIFICADO EM   : 01/28/2026 14:39:34
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_painel_completo.py
+NOME            : atualizar_painel_completo.py
+TIPO            : ARQUIVO
+TAMANHO         : 5939 bytes
+MODIFICADO EM   : 02/06/2026 13:11:29
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\python\atualizar_preco_medio.py
+NOME            : atualizar_preco_medio.py
+TIPO            : ARQUIVO
+TAMANHO         : 3216 bytes
+MODIFICADO EM   : 02/05/2026 16:14:35
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\python\verificar_precos.py
+NOME            : verificar_precos.py
+TIPO            : ARQUIVO
+TAMANHO         : 1764 bytes
+MODIFICADO EM   : 02/03/2026 14:53:13
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\python\verificar_site_vs_planilha.py
+NOME            : verificar_site_vs_planilha.py
+TIPO            : ARQUIVO
+TAMANHO         : 3450 bytes
+MODIFICADO EM   : 02/05/2026 15:08:15
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\python\ver_colunas.py
+NOME            : ver_colunas.py
+TIPO            : ARQUIVO
+TAMANHO         : 98 bytes
+MODIFICADO EM   : 01/28/2026 10:53:54
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\site\dados
+NOME            : dados
+TIPO            : PASTA
+TAMANHO         : -
+MODIFICADO EM   : 01/30/2026 09:44:32
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\site\dados\kpi_faturamento.json
+NOME            : kpi_faturamento.json
+TIPO            : ARQUIVO
+TAMANHO         : 230 bytes
+MODIFICADO EM   : 02/05/2026 16:15:50
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\site\dados\kpi_kg_total.json
+NOME            : kpi_kg_total.json
+TIPO            : ARQUIVO
+TAMANHO         : 86 bytes
+MODIFICADO EM   : 02/05/2026 16:15:50
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\site\dados\kpi_preco_medio.json
+NOME            : kpi_preco_medio.json
+TIPO            : ARQUIVO
+TAMANHO         : 132 bytes
+MODIFICADO EM   : 02/06/2026 13:11:45
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\site\dados\kpi_quantidade_pedidos.json
+NOME            : kpi_quantidade_pedidos.json
+TIPO            : ARQUIVO
+TAMANHO         : 76 bytes
+MODIFICADO EM   : 02/05/2026 16:15:50
+---------------------------------------------------------------------
+
+
+CAMINHO         : D:\USUARIOS\ADM05\Documents\dashboard_tv\site\dados\kpi_ticket_medio.json
+NOME            : kpi_ticket_medio.json
+TIPO            : ARQUIVO
+TAMANHO         : 88 bytes
+MODIFICADO EM   : 02/05/2026 16:15:50
+---------------------------------------------------------------------
+
