@@ -2,15 +2,11 @@
   "atual": {
     "preco_medio_kg": 12.89,
     "preco_medio_m2": 5.33,
-    "total_kg": 9545,
-    "total_m2": 23095,
-    "data": "05/02/2026"
+    "data": "12/02/2026"
   },
   "ano_anterior": {
-    "preco_medio_kg": 14.1,
-    "preco_medio_m2": 6.94,
-    "total_kg": 9669,
-    "total_m2": 19637,
-    "data": "05/02/2025"
+    "preco_medio_kg": 13.65,
+    "preco_medio_m2": 6.65,
+    "data": "12/02/2025"
   }
 }
