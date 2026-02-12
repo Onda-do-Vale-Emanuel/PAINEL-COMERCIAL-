@@ -12,13 +12,12 @@ body {
 
 body {
   font-family: Arial, Helvetica, sans-serif;
-  background: #f37021; /* laranja corporativo */
+  background: #f37021;
   color: #111;
   overflow: hidden;
 }
 
-/* SLIDES BÁSICO */
-
+/* SLIDES */
 .slide {
   position: absolute;
   inset: 0;
@@ -36,7 +35,6 @@ body {
 }
 
 /* CABEÇALHO */
-
 .slide-header {
   text-align: center;
   margin-bottom: 30px;
@@ -56,8 +54,7 @@ body {
   color: #ffe8d6;
 }
 
-/* CONTEÚDO CENTRAL */
-
+/* CONTEÚDO */
 .slide-content {
   flex: 1;
   display: flex;
@@ -66,14 +63,14 @@ body {
   justify-content: center;
 }
 
-/* GRID DE CARDS */
-
+/* LINHAS DE CARDS */
 .kpi-row {
   display: flex;
   gap: 20px;
   justify-content: center;
 }
 
+/* CARDS */
 .kpi-card {
   background: rgba(245, 245, 245, 0.96);
   border-radius: 20px;
@@ -105,8 +102,7 @@ body {
   max-width: 900px;
 }
 
-/* TIPOGRAFIA DOS CARDS */
-
+/* TEXTO */
 .kpi-label {
   font-size: 26px;
   font-weight: 700;
@@ -134,7 +130,6 @@ body {
 }
 
 /* VARIAÇÃO / META */
-
 .kpi-var {
   font-size: 40px;
   font-weight: 900;
@@ -153,18 +148,16 @@ body {
   font-weight: 900;
 }
 
-/* CORES POSITIVO / NEGATIVO */
-
+/* CORES */
 .positivo {
-  color: #00b35a; /* verde */
+  color: #00b35a;
 }
 
 .negativo {
-  color: #ff3b3b; /* vermelho */
+  color: #ff3b3b;
 }
 
 /* SLIDE IMAGEM */
-
 .slide-img-content {
   align-items: center;
 }
@@ -179,7 +172,6 @@ body {
 }
 
 /* RESPONSIVO */
-
 @media (max-width: 1200px) {
   .kpi-row {
     flex-direction: column;
