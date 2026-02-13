@@ -37,14 +37,34 @@ Promise.all([
 
   if (!fat || !qtd || !ticket || !kg) return;
 
-  /* SLIDE 1 */
+  /* ================= METAS ================= */
+  const METAS = {
+    1: { kg: 100000, fat: 1324746.56 },
+    2: { kg: 100000, fat: 1324746.56 },
+    3: { kg: 120000, fat: 1598757.69 },
+    4: { kg: 130000, fat: 1910459.23 },
+    5: { kg: 130000, fat: 1892998.21 },
+    6: { kg: 130000, fat: 1892995.74 },
+    7: { kg: 150000, fat: 2199365.46 },
+    8: { kg: 150000, fat: 2199350.47 },
+    9: { kg: 150000, fat: 2199340.46 },
+    10:{ kg: 150000, fat: 2199335.81 },
+    11:{ kg: 150000, fat: 2199360.62 },
+    12:{ kg: 98000,  fat: 1409516.02 }
+  };
+
+  const mes = Number(fat.data_atual.substring(3,5));
+
+  /* ================= SLIDE 1 ================= */
   document.getElementById("fatQtdAtual").innerText = qtd.atual + " pedidos";
   document.getElementById("fatValorAtual").innerText = formatarMoeda(fat.atual);
   document.getElementById("fatDataAtual").innerText =
     "de " + fat.inicio_mes + " até " + fat.data_atual;
 
-  document.getElementById("fatQtdAnterior").innerText = qtd.ano_anterior + " pedidos";
-  document.getElementById("fatValorAnterior").innerText = formatarMoeda(fat.ano_anterior);
+  document.getElementById("fatQtdAnterior").innerText =
+    qtd.ano_anterior + " pedidos";
+  document.getElementById("fatValorAnterior").innerText =
+    formatarMoeda(fat.ano_anterior);
   document.getElementById("fatDataAnterior").innerText =
     "de " + fat.inicio_mes_anterior + " até " + fat.data_ano_anterior;
 
@@ -54,13 +74,26 @@ Promise.all([
     `${pfFat} ${formatarPercentual(Math.abs(fat.variacao))} vs ano anterior`;
   aplicarCorPosNeg(elFatVar, fat.variacao);
 
-  /* SLIDE 2 */
+  /* META FAT */
+  const metaFat = METAS[mes].fat;
+  const metaFatPerc = (fat.atual / metaFat) * 100;
+
+  document.getElementById("fatMetaValor").innerText =
+    "Meta mês: " + formatarMoeda(metaFat);
+
+  const elFatMetaPerc = document.getElementById("fatMetaPerc");
+  elFatMetaPerc.innerText =
+    "🎯 " + metaFatPerc.toFixed(1).replace(".", ",") + "% da meta";
+
+  /* ================= SLIDE 2 ================= */
   document.getElementById("kgQtdAtual").innerText = qtd.atual + " pedidos";
-  document.getElementById("kgValorAtual").innerText = formatarNumero(kg.atual) + " kg";
+  document.getElementById("kgValorAtual").innerText =
+    formatarNumero(kg.atual) + " kg";
   document.getElementById("kgDataAtual").innerText =
     "de " + fat.inicio_mes + " até " + fat.data_atual;
 
-  document.getElementById("kgQtdAnterior").innerText = qtd.ano_anterior + " pedidos";
+  document.getElementById("kgQtdAnterior").innerText =
+    qtd.ano_anterior + " pedidos";
   document.getElementById("kgValorAnterior").innerText =
     formatarNumero(kg.ano_anterior) + " kg";
   document.getElementById("kgDataAnterior").innerText =
@@ -72,7 +105,18 @@ Promise.all([
     `${pfKG} ${formatarPercentual(Math.abs(kg.variacao))} vs ano anterior`;
   aplicarCorPosNeg(elKgVar, kg.variacao);
 
-  /* SLIDE 3 */
+  /* META KG */
+  const metaKG = METAS[mes].kg;
+  const metaKGperc = (kg.atual / metaKG) * 100;
+
+  document.getElementById("kgMetaValor").innerText =
+    "Meta mês: " + formatarNumero(metaKG) + " kg";
+
+  const elKgMetaPerc = document.getElementById("kgMetaPerc");
+  elKgMetaPerc.innerText =
+    "🎯 " + metaKGperc.toFixed(1).replace(".", ",") + "% da meta";
+
+  /* ================= SLIDE 3 ================= */
   document.getElementById("ticketAtual").innerText =
     formatarMoeda(ticket.atual);
   document.getElementById("ticketAnterior").innerText =
@@ -89,7 +133,7 @@ Promise.all([
     `${pfT} ${formatarPercentual(Math.abs(ticket.variacao))} vs ano anterior`;
   aplicarCorPosNeg(elTicketVar, ticket.variacao);
 
-  /* SLIDE 4 – PREÇO MÉDIO */
+  /* ================= SLIDE 4 ================= */
   if (preco && preco.atual) {
 
     document.getElementById("precoMedioKG").innerText =
