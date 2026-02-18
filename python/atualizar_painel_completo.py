@@ -1,147 +1,158 @@
 import pandas as pd
 import json
-import re
 from datetime import datetime
+from pathlib import Path
 
-CAMINHO_2026 = "excel/PEDIDOS_2026.xlsx"
-CAMINHO_2025 = "excel/PEDIDOS_2025.xlsx"
+# ============================================
+# DEFINIR DIRETÓRIO BASE DO PROJETO
+# ============================================
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ===============================
-# LIMPAR NÚMERO
-# ===============================
-def limpar_numero(v):
-    if pd.isna(v):
-        return 0.0
+EXCEL_2026 = BASE_DIR / "excel" / "PEDIDOS_2026.xlsx"
+EXCEL_2025 = BASE_DIR / "excel" / "PEDIDOS_2025.xlsx"
 
-    if isinstance(v, (int, float)):
-        return float(v)
+DADOS_DIR = BASE_DIR / "site" / "dados"
 
-    v = str(v).strip()
-    v = re.sub(r"[^0-9,.-]", "", v)
+# ============================================
+# FUNÇÃO PRINCIPAL
+# ============================================
+def main(data_inicio=None, data_fim=None):
 
-    if v in ["", "-", ",", ".", ",-", ".-"]:
-        return 0.0
+    df_2026 = pd.read_excel(EXCEL_2026)
+    df_2025 = pd.read_excel(EXCEL_2025)
 
-    if "." in v and "," in v:
-        return float(v.replace(".", "").replace(",", "."))
-    if "," in v:
-        return float(v.replace(",", "."))
-    return float(v)
+    df_2026["DATA"] = pd.to_datetime(df_2026["DATA"], errors="coerce")
+    df_2025["DATA"] = pd.to_datetime(df_2025["DATA"], errors="coerce")
 
-# ===============================
-# CARREGAR PLANILHA
-# ===============================
-def carregar(caminho):
-    df = pd.read_excel(caminho)
-    df.columns = df.columns.str.upper().str.strip()
+    df_2026 = df_2026[df_2026["TIPO DE PEDIDO"] == "Normal"]
+    df_2025 = df_2025[df_2025["TIPO DE PEDIDO"] == "Normal"]
 
-    for col in ["VALOR COM IPI", "KG", "TOTAL M2"]:
-        if col in df.columns:
-            df[col] = df[col].apply(limpar_numero)
+    hoje = datetime.today()
 
-    df["DATA"] = pd.to_datetime(df["DATA"], errors="coerce")
-    df = df[df["DATA"].notna()]
-    df = df[df["TIPO DE PEDIDO"] == "Normal"]
-
-    return df
-
-# ===============================
-# RESUMO
-# ===============================
-def resumo(df, inicio, fim):
-    d = df[(df["DATA"] >= inicio) & (df["DATA"] <= fim)]
-
-    total_valor = d["VALOR COM IPI"].sum()
-    total_kg = d["KG"].sum()
-    total_m2 = d["TOTAL M2"].sum()
-    pedidos = len(d)
-
-    ticket = total_valor / pedidos if pedidos else 0
-    preco_kg = total_valor / total_kg if total_kg else 0
-    preco_m2 = total_valor / total_m2 if total_m2 else 0
-
-    return {
-        "pedidos": pedidos,
-        "fat": total_valor,
-        "kg": total_kg,
-        "m2": total_m2,
-        "ticket": ticket,
-        "preco_kg": preco_kg,
-        "preco_m2": preco_m2
-    }
-
-# ===============================
-# PERÍODO MANUAL OU AUTOMÁTICO
-# ===============================
-def definir_periodo(df_2026):
-
-    escolha = input("Deseja filtrar por período específico? (S/N): ").strip().upper()
-
-    if escolha == "S":
-        inicio_str = input("Data inicial (dd/mm/aaaa): ")
-        fim_str = input("Data final (dd/mm/aaaa): ")
-
-        inicio_atual = datetime.strptime(inicio_str, "%d/%m/%Y")
-        fim_atual = datetime.strptime(fim_str, "%d/%m/%Y")
-
+    if data_inicio and data_fim:
+        inicio = datetime.strptime(data_inicio, "%d/%m/%Y")
+        fim = datetime.strptime(data_fim, "%d/%m/%Y")
     else:
-        ultima_data = df_2026["DATA"].max()
-        inicio_atual = ultima_data.replace(day=1)
-        fim_atual = ultima_data
+        inicio = hoje.replace(day=1)
+        fim = hoje
 
-    inicio_ant = inicio_atual.replace(year=inicio_atual.year - 1)
-    fim_ant = fim_atual.replace(year=fim_atual.year - 1)
+    inicio_ant = inicio.replace(year=inicio.year - 1)
+    fim_ant = fim.replace(year=fim.year - 1)
 
-    return inicio_atual, fim_atual, inicio_ant, fim_ant
+    df_atual = df_2026[(df_2026["DATA"] >= inicio) & (df_2026["DATA"] <= fim)]
+    df_ant = df_2025[(df_2025["DATA"] >= inicio_ant) & (df_2025["DATA"] <= fim_ant)]
 
-# ===============================
-# SALVAR JSON
-# ===============================
-def salvar(nome, dados):
-    with open(f"dados/{nome}", "w", encoding="utf-8") as f:
-        json.dump(dados, f, ensure_ascii=False, indent=2)
-    with open(f"site/dados/{nome}", "w", encoding="utf-8") as f:
-        json.dump(dados, f, ensure_ascii=False, indent=2)
+    # =============================
+    # CÁLCULOS
+    # =============================
+    pedidos_atual = len(df_atual)
+    pedidos_ant = len(df_ant)
 
-# ===============================
-# EXECUÇÃO
-# ===============================
-if __name__ == "__main__":
+    fat_atual = df_atual["VALOR COM IPI"].sum()
+    fat_ant = df_ant["VALOR COM IPI"].sum()
 
-    df_2026 = carregar(CAMINHO_2026)
-    df_2025 = carregar(CAMINHO_2025)
+    kg_atual = df_atual["KG"].sum()
+    kg_ant = df_ant["KG"].sum()
 
-    inicio_atual, fim_atual, inicio_ant, fim_ant = definir_periodo(df_2026)
+    m2_atual = df_atual["TOTAL M2"].sum()
+    m2_ant = df_ant["TOTAL M2"].sum()
 
-    atual = resumo(df_2026, inicio_atual, fim_atual)
-    anterior = resumo(df_2025, inicio_ant, fim_ant)
+    ticket_atual = fat_atual / pedidos_atual if pedidos_atual else 0
+    ticket_ant = fat_ant / pedidos_ant if pedidos_ant else 0
 
-    salvar("kpi_faturamento.json", {
-        "atual": atual["fat"],
-        "ano_anterior": anterior["fat"],
-        "variacao": ((atual["fat"]/anterior["fat"])-1)*100 if anterior["fat"] else 0,
-        "inicio_mes": inicio_atual.strftime("%d/%m/%Y"),
-        "data_atual": fim_atual.strftime("%d/%m/%Y"),
+    preco_kg_atual = fat_atual / kg_atual if kg_atual else 0
+    preco_kg_ant = fat_ant / kg_ant if kg_ant else 0
+
+    preco_m2_atual = fat_atual / m2_atual if m2_atual else 0
+    preco_m2_ant = fat_ant / m2_ant if m2_ant else 0
+
+    # =============================
+    # JSON FATURAMENTO
+    # =============================
+    faturamento_json = {
+        "atual": round(fat_atual, 2),
+        "ano_anterior": round(fat_ant, 2),
+        "variacao": ((fat_atual / fat_ant) - 1) * 100 if fat_ant else 0,
+        "inicio_mes": inicio.strftime("%d/%m/%Y"),
+        "data_atual": fim.strftime("%d/%m/%Y"),
         "inicio_mes_anterior": inicio_ant.strftime("%d/%m/%Y"),
         "data_ano_anterior": fim_ant.strftime("%d/%m/%Y")
-    })
+    }
 
-    salvar("kpi_quantidade_pedidos.json", {
-        "atual": atual["pedidos"],
-        "ano_anterior": anterior["pedidos"],
-        "variacao": ((atual["pedidos"]/anterior["pedidos"])-1)*100 if anterior["pedidos"] else 0
-    })
+    # =============================
+    # JSON QUANTIDADE
+    # =============================
+    quantidade_json = {
+        "atual": pedidos_atual,
+        "ano_anterior": pedidos_ant,
+        "variacao": ((pedidos_atual / pedidos_ant) - 1) * 100 if pedidos_ant else 0
+    }
 
-    salvar("kpi_kg_total.json", {
-        "atual": atual["kg"],
-        "ano_anterior": anterior["kg"],
-        "variacao": ((atual["kg"]/anterior["kg"])-1)*100 if anterior["kg"] else 0
-    })
+    # =============================
+    # JSON KG TOTAL
+    # =============================
+    kg_json = {
+        "atual": round(kg_atual, 0),
+        "ano_anterior": round(kg_ant, 0),
+        "variacao": ((kg_atual / kg_ant) - 1) * 100 if kg_ant else 0
+    }
 
-    salvar("kpi_ticket_medio.json", {
-        "atual": atual["ticket"],
-        "ano_anterior": anterior["ticket"],
-        "variacao": ((atual["ticket"]/anterior["ticket"])-1)*100 if anterior["ticket"] else 0
-    })
+    # =============================
+    # JSON TICKET
+    # =============================
+    ticket_json = {
+        "atual": round(ticket_atual, 2),
+        "ano_anterior": round(ticket_ant, 2),
+        "variacao": ((ticket_atual / ticket_ant) - 1) * 100 if ticket_ant else 0
+    }
+
+    # =============================
+    # JSON PREÇO MÉDIO
+    # =============================
+    preco_json = {
+        "atual": {
+            "preco_medio_kg": round(preco_kg_atual, 2),
+            "preco_medio_m2": round(preco_m2_atual, 2),
+            "total_kg": round(kg_atual, 0),
+            "total_m2": round(m2_atual, 0),
+            "data": fim.strftime("%d/%m/%Y")
+        },
+        "ano_anterior": {
+            "preco_medio_kg": round(preco_kg_ant, 2),
+            "preco_medio_m2": round(preco_m2_ant, 2),
+            "total_kg": round(kg_ant, 0),
+            "total_m2": round(m2_ant, 0),
+            "data": fim_ant.strftime("%d/%m/%Y")
+        }
+    }
+
+    # =============================
+    # SALVAR TODOS OS JSONS
+    # =============================
+    DADOS_DIR.mkdir(exist_ok=True)
+
+    with open(DADOS_DIR / "kpi_faturamento.json", "w", encoding="utf-8") as f:
+        json.dump(faturamento_json, f, indent=2, ensure_ascii=False)
+
+    with open(DADOS_DIR / "kpi_quantidade_pedidos.json", "w", encoding="utf-8") as f:
+        json.dump(quantidade_json, f, indent=2, ensure_ascii=False)
+
+    with open(DADOS_DIR / "kpi_kg_total.json", "w", encoding="utf-8") as f:
+        json.dump(kg_json, f, indent=2, ensure_ascii=False)
+
+    with open(DADOS_DIR / "kpi_ticket_medio.json", "w", encoding="utf-8") as f:
+        json.dump(ticket_json, f, indent=2, ensure_ascii=False)
+
+    with open(DADOS_DIR / "kpi_preco_medio.json", "w", encoding="utf-8") as f:
+        json.dump(preco_json, f, indent=2, ensure_ascii=False)
 
     print("ATUALIZAÇÃO CONCLUÍDA")
+    print("Pedidos 2026:", pedidos_atual)
+    print("Pedidos 2025:", pedidos_ant)
+
+
+# ============================================
+# EXECUÇÃO AUTOMÁTICA
+# ============================================
+if __name__ == "__main__":
+    main()
