@@ -1,48 +1,19 @@
-# ==============================
-# ARQUIVOS TEMPORÁRIOS DO EXCEL
-# ==============================
+# Executável
+dist/
+build/
+*.spec
 
-~$*.xlsx
-~$*.xls
-~$*.xlsm
-
-# ==============================
-# CACHE PYTHON
-# ==============================
-
+# Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
 
-# ==============================
-# LOGS
-# ==============================
+# Arquivos temporários Excel
+~$*.xlsx
 
-*.log
+# Pastas internas python build
+python/build/
+python/dist/
 
-# ==============================
-# ARQUIVOS TEMPORÁRIOS WINDOWS
-# ==============================
-
-Thumbs.db
-Desktop.ini
-
-# ==============================
-# DEBUG / TESTES LOCAIS
-# ==============================
-
-python/debug_*.py
-
-# ==============================
-# BACKUPS AUTOMÁTICOS
-# ==============================
-
-*.bak
-*.tmp
-
-# ==============================
-# ARQUIVOS DE SISTEMA
-# ==============================
-
-.DS_Store
+# Arquivos de controle interno
+python/.contador_exec
+python/.mes_exec
