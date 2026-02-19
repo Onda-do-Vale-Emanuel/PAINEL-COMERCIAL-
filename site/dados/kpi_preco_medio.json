@@ -1,16 +1,16 @@
 {
   "atual": {
-    "preco_medio_kg": 13.51,
-    "preco_medio_m2": 5.56,
-    "total_kg": 22445.53,
-    "total_m2": 54510.75,
-    "data": "10/02/2026"
+    "preco_medio_kg": 12.752720216218377,
+    "preco_medio_m2": 5.616733260858988,
+    "total_kg": 54041.659999999996,
+    "total_m2": 122700.88999999998,
+    "data": "18/02/2026"
   },
   "ano_anterior": {
-    "preco_medio_kg": 13.82,
-    "preco_medio_m2": 7.02,
-    "total_kg": 20107.34,
-    "total_m2": 39570.57,
-    "data": "10/02/2025"
+    "preco_medio_kg": 13.64989239401471,
+    "preco_medio_m2": 6.770150509307726,
+    "total_kg": 49207.299999999996,
+    "total_m2": 99211.13999999998,
+    "data": "18/02/2025"
   }
 }
